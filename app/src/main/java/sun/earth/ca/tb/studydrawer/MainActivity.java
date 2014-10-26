@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity
@@ -52,6 +53,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void onSectionAttached(int number) {
+        //when fragment in main contain change,called from new fragment 's on attach
         switch (number) {
             case 1:
                 mTitle = getString(R.string.title_section1);
@@ -66,6 +68,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void restoreActionBar() {
+        //change actionbar's title,from onCreateOptionsMenu
         ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
@@ -79,6 +82,7 @@ public class MainActivity extends ActionBarActivity
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
+            //drawer不在的时候，这里决定标题和菜单
             getMenuInflater().inflate(R.menu.main, menu);
             restoreActionBar();
             return true;
@@ -93,6 +97,12 @@ public class MainActivity extends ActionBarActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            Toast.makeText(this, getString(R.string.Setup_action), Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        //从抽屉移动过来看看，看来activity,fragment都调用
+        if (item.getItemId() == R.id.action_example) {
+            Toast.makeText(this, "Example action.", Toast.LENGTH_SHORT).show();
             return true;
         }
         return super.onOptionsItemSelected(item);
