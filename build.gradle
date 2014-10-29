@@ -2,6 +2,7 @@
 
 buildscript {
     repositories {
+        maven { url 'http://repo1.maven.org/maven2' }
         mavenLocal()
         jcenter()
     }
@@ -15,6 +16,7 @@ buildscript {
 
 allprojects {
     repositories {
+        maven { url 'https://github.com/donnfelker/mvn-repo/raw/master/' }
         mavenLocal()
         jcenter()
     }
