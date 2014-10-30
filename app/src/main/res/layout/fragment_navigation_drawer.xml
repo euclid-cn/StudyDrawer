@@ -1,5 +1,54 @@
-<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearDrawer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/userDrawer"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#161F29" >
+
+        <TextView
+            android:id="@+id/tituloDrawer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="13dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_toRightOf="@+id/ImgDrawer"
+            android:text="taobo"
+            android:textColor="#ffffff"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/subTituloDrawer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/tituloDrawer"
+            android:layout_below="@+id/tituloDrawer"
+            android:text="snailrun@gmail.com"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+
+        <ImageView
+            android:id="@+id/ImgDrawer"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="14dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_launcher" />
+    </RelativeLayout>
+
+<ListView
+    android:id = "@+id/list_item"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:choiceMode="singleChoice"
@@ -7,3 +56,5 @@
     android:dividerHeight="0dp"
     android:background="#cccc"
     tools:context=".NavigationDrawerFragment" />
+
+    </LinearLayout>
