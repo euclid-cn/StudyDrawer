@@ -1,8 +1,10 @@
 package sun.earth.ca.tb.studydrawer;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -29,10 +31,14 @@ public class MainActivity extends ActionBarActivity
      */
     private CharSequence mTitle;
 
+    SharedPreferences sp;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -94,6 +100,14 @@ public class MainActivity extends ActionBarActivity
             // decide what to show in the action bar.
             //drawer不在的时候，这里决定标题和菜单
             getMenuInflater().inflate(R.menu.main, menu);
+            String usrname = sp.getString(NavigationDrawerFragment.PREF_USER_LOGIN_NAME,"");
+            if(usrname.length()!=0){
+                menu.findItem(R.id.action_login).setVisible(false);
+                menu.findItem(R.id.action_logout).setVisible(true);
+            }else{
+                menu.findItem(R.id.action_login).setVisible(true);
+                menu.findItem(R.id.action_logout).setVisible(false);
+            }
             restoreActionBar();
             return true;
         }
@@ -105,15 +119,28 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             Toast.makeText(this, getString(R.string.Setup_action), Toast.LENGTH_SHORT).show();
-            return true;
+            //return true;
         }
         //从抽屉移动过来看看，看来activity,fragment都调用
         if (item.getItemId() == R.id.action_example) {
             Toast.makeText(this, "Example action.", Toast.LENGTH_SHORT).show();
-            return true;
+            //return true;
+        }
+
+        if(item.getItemId() == R.id.action_login){
+            sp.edit().putString(NavigationDrawerFragment.PREF_USER_LOGIN_NAME,"username").apply();
+            supportInvalidateOptionsMenu();
+            mNavigationDrawerFragment.flashuserinfo();
+        }
+
+        if(item.getItemId() == R.id.action_logout){
+            sp.edit().putString(NavigationDrawerFragment.PREF_USER_LOGIN_NAME,"").apply();
+            supportInvalidateOptionsMenu();
+            mNavigationDrawerFragment.flashuserinfo();
         }
         return super.onOptionsItemSelected(item);
     }

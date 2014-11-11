@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 /**
@@ -40,6 +41,9 @@ public class NavigationDrawerFragment extends Fragment {
      * 第一次抽屉打开
      */
     private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+    //原来登入的名字
+    public static final String PREF_USER_LOGIN_NAME = "user_login_name";
 
     /**
      * A pointer to the current callbacks instance (the Activity).
@@ -62,6 +66,11 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
+    RelativeLayout userlogin;
+    RelativeLayout userinfo;
+
+    String mUsername;
+
     public NavigationDrawerFragment() {
     }
 
@@ -73,6 +82,7 @@ public class NavigationDrawerFragment extends Fragment {
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+        mUsername = sp.getString(PREF_USER_LOGIN_NAME,"");
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
@@ -117,7 +127,50 @@ public class NavigationDrawerFragment extends Fragment {
                         getString(R.string.title_section3),
                 }));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+
+        userlogin = (RelativeLayout) root.findViewById(R.id.signuplongin);
+        userinfo = (RelativeLayout) root.findViewById(R.id.userDrawer);
+
+        userlogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userLogin();
+            }
+        });
+
+        userinfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userinfoclick();
+            }
+        });
+
+        flashuserinfo();
+
+
         return root;
+    }
+
+    public void flashuserinfo(){
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mUsername = sp.getString(PREF_USER_LOGIN_NAME,"");
+
+        if(mUsername.length()==0) {
+            userinfo.setVisibility(View.GONE);
+            userlogin.setVisibility(View.VISIBLE);
+        }else{
+            userinfo.setVisibility(View.VISIBLE);
+            userlogin.setVisibility(View.GONE);
+        }
+    }
+
+    private void userinfoclick() {
+        Toast.makeText(this.getActivity(),"user info click",Toast.LENGTH_SHORT).show();
+    }
+
+    private void userLogin() {
+        Toast.makeText(this.getActivity(),"user login or signup",Toast.LENGTH_SHORT).show();
     }
 
     public boolean isDrawerOpen() {
@@ -286,6 +339,9 @@ public class NavigationDrawerFragment extends Fragment {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();
     }
 
+    public boolean isUsernameHere(){
+        return mUsername.length()!=0;
+    }
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
