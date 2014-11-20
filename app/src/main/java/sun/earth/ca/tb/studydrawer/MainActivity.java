@@ -132,7 +132,8 @@ public class MainActivity extends ActionBarActivity
         }
 
         if(item.getItemId() == R.id.action_login){
-            sp.edit().putString(NavigationDrawerFragment.PREF_USER_LOGIN_NAME,"username").apply();
+            //sp.edit().putString(NavigationDrawerFragment.PREF_USER_LOGIN_NAME,"username").apply();
+            mNavigationDrawerFragment.userLogin();
             supportInvalidateOptionsMenu();
             mNavigationDrawerFragment.flashuserinfo();
         }

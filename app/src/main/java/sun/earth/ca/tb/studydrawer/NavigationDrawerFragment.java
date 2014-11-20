@@ -1,5 +1,12 @@
 package sun.earth.ca.tb.studydrawer;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.app.AlertDialog;
+import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
 import android.support.v7.app.ActionBar;
@@ -11,6 +18,8 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,7 +30,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.udinic.accounts_authenticator_example.authentication.AccountGeneral;
+import com.udinic.accounts_authenticator_example.authentication.ParseComServerAuthenticate;
+
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
+
+import static com.udinic.accounts_authenticator_example.authentication.AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -68,8 +86,20 @@ public class NavigationDrawerFragment extends Fragment {
 
     RelativeLayout userlogin;
     RelativeLayout userinfo;
+    TextView loginusername;
+    TextView mUserNameView;
+    TextView mUserEmailView;
 
     String mUsername;
+
+    private AccountManager mAccountManager;
+    private AlertDialog.Builder mAlertDialog;
+    private boolean mInvalidate;
+
+    String mAuthtoken;
+    int choice=0;
+
+    SharedPreferences sp;
 
     public NavigationDrawerFragment() {
     }
@@ -78,9 +108,12 @@ public class NavigationDrawerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        sp = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        mAccountManager = AccountManager.get(this.getActivity());
+
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
         mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
         mUsername = sp.getString(PREF_USER_LOGIN_NAME,"");
 
@@ -100,6 +133,8 @@ public class NavigationDrawerFragment extends Fragment {
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
     }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -145,6 +180,10 @@ public class NavigationDrawerFragment extends Fragment {
             }
         });
 
+        loginusername = (TextView) root.findViewById(R.id.titsign);
+
+        mUserNameView = (TextView) root.findViewById(R.id.tituloDrawer);
+        mUserEmailView = (TextView) root.findViewById(R.id.subTituloDrawer);
         flashuserinfo();
 
 
@@ -153,7 +192,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     public void flashuserinfo(){
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        //SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mUsername = sp.getString(PREF_USER_LOGIN_NAME,"");
 
         if(mUsername.length()==0) {
@@ -162,15 +201,275 @@ public class NavigationDrawerFragment extends Fragment {
         }else{
             userinfo.setVisibility(View.VISIBLE);
             userlogin.setVisibility(View.GONE);
+            int nowusernumber=-1;
+
+            final Account availableAccounts[] = mAccountManager.getAccountsByType(AccountGeneral.ACCOUNT_TYPE);
+
+            String name[] = new String[availableAccounts.length];
+            if(availableAccounts.length>0){
+                for (int i = 0; i < availableAccounts.length; i++) {
+                    name[i] = availableAccounts[i].name;
+                    if(mUsername!=null){
+                        if(mUsername.equals(name[i])){
+                            nowusernumber=i;
+                        }
+                    }
+                }
+                if(nowusernumber!=-1){
+                    getExistingAccountAuthToken(availableAccounts[nowusernumber], AUTHTOKEN_TYPE_FULL_ACCESS);
+                }
+            }
         }
     }
 
     private void userinfoclick() {
-        Toast.makeText(this.getActivity(),"user info click",Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this.getActivity(),"user info click",Toast.LENGTH_SHORT).show();
+        userLogin();
     }
 
-    private void userLogin() {
-        Toast.makeText(this.getActivity(),"user login or signup",Toast.LENGTH_SHORT).show();
+    public void userLogin() {
+        //Toast.makeText(this.getActivity(),"user login or signup",Toast.LENGTH_SHORT).show();
+        //用户注册
+        //getTokenForAccountCreateIfNeeded(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
+        //addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
+
+        showAccountPicker(AUTHTOKEN_TYPE_FULL_ACCESS, false);
+        //getnowuserinfo();
+    }
+
+    private void getnowuserinfo() {
+        if(mAuthtoken!=null){
+            RequestInterceptor requestInterceptor = new RequestInterceptor() {
+                @Override
+                public void intercept(RequestFacade request) {
+                    request.addHeader("X-Parse-Application-Id", "zpDBLWZb3QXcxHh9LnGeRGtZVRUva3RFpO0NOYEp");
+                    request.addHeader("X-Parse-REST-API-Key","anK8StLPPdJLOzzy3dKPwLAqx6xq4NIQFPvxXUbB");
+                    //request.addHeader("Content-Type", "application/json");
+                }
+            };
+
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(ParseComServerAuthenticate.URL_BASE)
+                    .setRequestInterceptor(requestInterceptor)
+                    .build();
+
+            ParseComServerAuthenticate.userInterface user = restAdapter.create(ParseComServerAuthenticate.userInterface.class);
+            final ParseComServerAuthenticate.User nownuser = user.getuserinfofromsession(mAuthtoken);
+
+            if(nownuser!=null){
+                this.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //loginusername.setText(nownuser.getUsername());
+                        userinfo.setVisibility(View.VISIBLE);
+                        userlogin.setVisibility(View.GONE);
+
+                        mUserNameView.setText(nownuser.getUsername());
+                        mUserEmailView.setText(nownuser.getEmail());
+                    }
+                });
+
+//                loginusername.postInvalidate();
+
+            }
+        }
+    }
+
+    /**
+     * Add new account to the account manager
+     * @param accountType
+     * @param authTokenType
+     */
+    private void addNewAccount(String accountType, String authTokenType) {
+        final AccountManagerFuture<Bundle> future = mAccountManager.addAccount(accountType, authTokenType, null, null, this.getActivity(), new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> future) {
+                try {
+                    Bundle bnd = future.getResult();
+                    showMessage("Account was created");
+                    Log.d("udinic", "AddNewAccount name is: " + bnd.getString("authAccount"));
+                    sp.edit().putString(PREF_USER_LOGIN_NAME,bnd.getString("authAccount")).apply();
+                    flashuserinfo();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showMessage(e.getMessage());
+                }
+            }
+        }, null);
+    }
+
+    /**
+     * Show all the accounts registered on the account manager. Request an auth token upon user select.
+     * @param authTokenType
+     */
+    private void showAccountPicker(final String authTokenType, final boolean invalidate) {
+        mInvalidate = invalidate;
+        int nowusernumber=0;
+        mUsername = sp.getString(PREF_USER_LOGIN_NAME,"");
+        final Account availableAccounts[] = mAccountManager.getAccountsByType(AccountGeneral.ACCOUNT_TYPE);
+
+        String name[] = new String[availableAccounts.length+1];
+        if(availableAccounts.length>0){
+            for (int i = 0; i < availableAccounts.length; i++) {
+                name[i] = availableAccounts[i].name;
+                if(mUsername!=null){
+                    if(mUsername.equals(name[i])){
+                        nowusernumber=i;
+                    }
+                }
+            }
+        }
+        name[availableAccounts.length]="Add a new account";
+//        if (availableAccounts.length == 0) {
+//            Toast.makeText(this.getActivity(), "No accounts", Toast.LENGTH_SHORT).show();
+//        } else {
+//            String name[] = new String[availableAccounts.length];
+//            for (int i = 0; i < availableAccounts.length; i++) {
+//                name[i] = availableAccounts[i].name;
+//            }
+//
+//            // Account picker
+//            mAlertDialog = new AlertDialog.Builder(this.getActivity()).setTitle("Pick Account").setAdapter(new ArrayAdapter<String>(this.getActivity().getBaseContext(), android.R.layout.simple_list_item_1, name), new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    if(invalidate)
+//                        invalidateAuthToken(availableAccounts[which], authTokenType);
+//                    else
+//                        getExistingAccountAuthToken(availableAccounts[which], authTokenType);
+//                }
+//            }).create();
+//            mAlertDialog.show();
+//        }
+
+        mAlertDialog = new AlertDialog.Builder(this.getActivity());
+        mAlertDialog.setTitle("Pick Account");
+
+
+
+        mAlertDialog.setSingleChoiceItems(name, nowusernumber, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        choice = which;
+                    }
+                }
+        );
+        mAlertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                    if(choice<availableAccounts.length)
+                        if(invalidate)
+                            invalidateAuthToken(availableAccounts[choice], authTokenType);
+                        else {
+                            getExistingAccountAuthToken(availableAccounts[choice], authTokenType);
+                            sp.edit().putString(PREF_USER_LOGIN_NAME,availableAccounts[choice].name).apply();
+                            //getnowuserinfo();
+                        }
+                    else
+                        addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
+
+            }
+        });
+
+        mAlertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        mAlertDialog.create();
+        mAlertDialog.show();
+    }
+
+    /**
+     * Invalidates the auth token for the account
+     * @param account
+     * @param authTokenType
+     */
+    private void invalidateAuthToken(final Account account, String authTokenType) {
+        final AccountManagerFuture<Bundle> future = mAccountManager.getAuthToken(account, authTokenType, null, this.getActivity(), null,null);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Bundle bnd = future.getResult();
+
+                    final String authtoken = bnd.getString(AccountManager.KEY_AUTHTOKEN);
+                    mAccountManager.invalidateAuthToken(account.type, authtoken);
+                    showMessage(account.name + " invalidated");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showMessage(e.getMessage());
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Get the auth token for an existing account on the AccountManager
+     * @param account
+     * @param authTokenType
+     */
+    private void getExistingAccountAuthToken(Account account, String authTokenType) {
+        final AccountManagerFuture<Bundle> future = mAccountManager.getAuthToken(account, authTokenType, null, this.getActivity(), null, null);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Bundle bnd = future.getResult();
+
+                    mAuthtoken = bnd.getString(AccountManager.KEY_AUTHTOKEN);
+                    showMessage((mAuthtoken != null) ? "SUCCESS!\ntoken: " + mAuthtoken : "FAIL");
+                    Log.d("udinic", "GetToken Bundle is " + bnd);
+                    getnowuserinfo();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showMessage(e.getMessage());
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Get an auth token for the account.
+     * If not exist - add it and then return its auth token.
+     * If one exist - return its auth token.
+     * If more than one exists - show a picker and return the select account's auth token.
+     * @param accountType
+     * @param authTokenType
+     */
+    private void getTokenForAccountCreateIfNeeded(String accountType, String authTokenType) {
+        final AccountManagerFuture<Bundle> future = mAccountManager.getAuthTokenByFeatures(accountType, authTokenType, null, this.getActivity(), null, null,
+                new AccountManagerCallback<Bundle>() {
+                    @Override
+                    public void run(AccountManagerFuture<Bundle> future) {
+                        Bundle bnd = null;
+                        try {
+                            bnd = future.getResult();
+                            final String authtoken = bnd.getString(AccountManager.KEY_AUTHTOKEN);
+                            showMessage(((authtoken != null) ? "SUCCESS!\ntoken: " + authtoken : "FAIL"));
+                            Log.d("udinic", "GetTokenForAccount Bundle is " + bnd);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            showMessage(e.getMessage());
+                        }
+                    }
+                }
+                , null);
+    }
+
+    private void showMessage(final String msg) {
+        if (TextUtils.isEmpty(msg))
+            return;
+
+        this.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(NavigationDrawerFragment.this.getActivity(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public boolean isDrawerOpen() {
