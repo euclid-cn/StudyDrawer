@@ -11,14 +11,14 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        applicationId "com.udinic.accounts_authenticator_example"
+        //applicationId "com.udinic.accounts_authenticator_example"
         minSdkVersion 8
         targetSdkVersion 19
     }
 
     buildTypes {
         release {
-            runProguard false
+            //runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
